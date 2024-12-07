@@ -8,6 +8,10 @@ public class PlyerController : MonoBehaviour
     public float jumpHeight = 2f;
     public float gravity = -9.8f;
 
+    public Transform groundCheck;
+    public float groundDistance = 0.4f;
+    public LayerMask groundMask;
+    bool isGrounded;
     private CharacterController controller;
     private Vector3 velocity;
 
@@ -18,6 +22,7 @@ public class PlyerController : MonoBehaviour
 
     void Update()
     {
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
         // 移動輸入
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
