@@ -1,0 +1,4 @@
+repository "ACT-Game@wei34@cloud"
+  path "/"
+    br "/main"
+    co "/main"
