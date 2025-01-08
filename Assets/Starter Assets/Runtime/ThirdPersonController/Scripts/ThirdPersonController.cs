@@ -1,4 +1,9 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -30,6 +35,8 @@ namespace StarterAssets
 
         public AudioClip LandingAudioClip;
         public AudioClip[] FootstepAudioClips;
+        public AudioClip HitAudioClip;
+        public AudioClip DeadAudioClip;
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
 
         [Space(10)]
@@ -74,6 +81,10 @@ namespace StarterAssets
 
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
+        public Collider Hammer;
+        public Image HpImage;
+        public int Hp = 3;
+
 
         // cinemachine
         private float _cinemachineTargetYaw;
@@ -117,7 +128,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM
                 return _playerInput.currentControlScheme == "KeyboardMouse";
 #else
-				return false;
+                return false;
 #endif
             }
         }
@@ -135,14 +146,14 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-            
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM
             _playerInput = GetComponent<PlayerInput>();
 #else
-			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+            Debug.LogError("Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
             AssignAnimationIDs();
@@ -159,6 +170,7 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            Attack();
         }
 
         private void LateUpdate()
@@ -262,6 +274,7 @@ namespace StarterAssets
 
                 // rotate to face input direction relative to camera position
                 transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+
             }
 
 
@@ -276,8 +289,39 @@ namespace StarterAssets
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
+
             }
         }
+
+        private void Attack()
+        {
+            if (_input.attack && !Hammer.enabled)
+            {
+                _animator.SetBool("Attack", true);
+                _input.attack = false;
+            }
+        }
+
+        //受傷
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Attack") && _playerInput.enabled)
+            {
+                _animator.SetTrigger("Hit");
+                _playerInput.enabled = false;
+                Hammer.enabled = false;
+                _input.attack = false;
+
+                Hp--;
+                HpImage.fillAmount = Hp * 0.33f;
+                AudioSource.PlayClipAtPoint(Hp != 0 || !Input.GetKey(KeyCode.K) ? HitAudioClip : DeadAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+
+
+            }
+        }
+
+        
+
 
         private void JumpAndGravity()
         {
@@ -304,6 +348,7 @@ namespace StarterAssets
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+                    _input.attack = false;
 
                     // update animator if using character
                     if (_hasAnimator)
@@ -386,6 +431,30 @@ namespace StarterAssets
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
                 AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+            }
+        }
+
+        private void OnAttackHit(AnimationEvent animationEvent)
+        {
+            Hammer.enabled = true;
+
+        }
+
+        private void OnAttackEnd(AnimationEvent animationEvent)
+        {
+            _animator.SetBool("Attack", false);
+            Hammer.enabled = false;
+            _input.attack = false;
+
+        }
+
+        private void OnHitEnd(AnimationEvent animationEvent)
+        {
+            _playerInput.enabled = true;
+            if (Hp <= 0)
+            {
+                Scene currentScene = SceneManager.GetActiveScene();
+                SceneManager.LoadScene(currentScene.name);
             }
         }
     }

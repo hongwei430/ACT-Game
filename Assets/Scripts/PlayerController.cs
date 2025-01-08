@@ -12,6 +12,11 @@ public class PlayerController : MonoBehaviour
     private float currentAlpha;  // 当前Alpha值
     private float targetAlpha;   // 目标Alpha值
     private float alphaChangeSpeed = 2.2f;  // 透明度变化速度
+    public AudioClip CoinAudioClip;
+    public Text slotText;  // Text 元件
+    public float targetNumber = 100;  // 最終顯示的數字
+    public float scrollSpeed = 0.05f;  // 每次變更的時間間隔
+    private float currentNumber = 0;
 
     void Start()
     {
@@ -31,18 +36,16 @@ public class PlayerController : MonoBehaviour
         if (Input.GetMouseButtonDown(1))  // 1 表示滑鼠右鍵
         {
             SetTargetAlpha(0.25f);
-            Debug.Log("0.25");
         }
         if (Input.GetMouseButton(1))  // 1 表示滑鼠右鍵
         {
             InteractWithGolem();
         }
-        if(Input.GetMouseButtonUp(1))
+        if (Input.GetMouseButtonUp(1))
         {
             SetTargetAlpha(0);
-            Debug.Log("0");
         }
-        
+
 
         if (Mathf.Abs(currentAlpha - targetAlpha) > 0.01f)
         {
@@ -61,6 +64,24 @@ public class PlayerController : MonoBehaviour
             Color color = LockinImage.color;
             color.a = alpha;
             LockinImage.color = color;
+        }
+    }
+
+    public void StartSlotAnimation(float newTargetNumber)
+    {
+        targetNumber += newTargetNumber;
+        StartCoroutine(AnimateSlotNumber());
+        AudioSource.PlayClipAtPoint(CoinAudioClip,transform.position);
+    }
+
+    private IEnumerator AnimateSlotNumber()
+    {
+        while (currentNumber != targetNumber)
+        {
+            // 模擬數字滾動效果
+            currentNumber = Mathf.MoveTowards(currentNumber, targetNumber, 10);
+            slotText.text = currentNumber.ToString();
+            yield return new WaitForSeconds(scrollSpeed);
         }
     }
 
