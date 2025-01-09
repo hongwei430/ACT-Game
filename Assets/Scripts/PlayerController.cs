@@ -17,6 +17,9 @@ public class PlayerController : MonoBehaviour
     public float targetNumber = 100;  // 最終顯示的數字
     public float scrollSpeed = 0.05f;  // 每次變更的時間間隔
     private float currentNumber = 0;
+    public GameObject Boss;
+    public GameObject Bosstext;
+    public bool SeeBoss = false;
 
     void Start()
     {
@@ -52,6 +55,14 @@ public class PlayerController : MonoBehaviour
             currentAlpha = Mathf.Lerp(currentAlpha, targetAlpha, Time.deltaTime * alphaChangeSpeed);
             SetAlpha(currentAlpha);
         }
+
+        if (currentNumber > 35000 && !SeeBoss)
+        {
+            SeeBoss = true;
+            StartCoroutine(ToBoss());
+            Boss.SetActive(true);
+            Bosstext.SetActive(true);
+        }
     }
     public void SetTargetAlpha(float alpha)
     {
@@ -71,7 +82,14 @@ public class PlayerController : MonoBehaviour
     {
         targetNumber += newTargetNumber;
         StartCoroutine(AnimateSlotNumber());
-        AudioSource.PlayClipAtPoint(CoinAudioClip,transform.position);
+        AudioSource.PlayClipAtPoint(CoinAudioClip, transform.position);
+    }
+    private IEnumerator ToBoss()
+    {
+
+        yield return new WaitForSeconds(3);
+        Bosstext.SetActive(false);
+        transform.position = new Vector3 (140,10,40);
     }
 
     private IEnumerator AnimateSlotNumber()
@@ -79,8 +97,8 @@ public class PlayerController : MonoBehaviour
         while (currentNumber != targetNumber)
         {
             // 模擬數字滾動效果
-            currentNumber = Mathf.MoveTowards(currentNumber, targetNumber, 10);
-            slotText.text = currentNumber.ToString();
+            currentNumber = Mathf.MoveTowards(currentNumber, targetNumber, 100);
+            slotText.text = "¥" + currentNumber.ToString();
             yield return new WaitForSeconds(scrollSpeed);
         }
     }
@@ -99,6 +117,14 @@ public class PlayerController : MonoBehaviour
                 if (golemScript != null)
                 {
                     golemScript.OnSpot();  // 調用特定函式
+                }
+            }
+            if (target.CompareTag("Boss"))
+            {
+                BossBehavior bossScript = target.GetComponent<BossBehavior>();
+                if (bossScript != null)
+                {
+                    bossScript.OnSpot();  // 調用特定函式
                 }
             }
         }

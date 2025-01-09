@@ -9,6 +9,7 @@ TagManager:
   - Golem
   - Attack
   - Weakness
+  - Boss
   layers:
   - Default
   - TransparentFX

@@ -137,7 +137,7 @@ public class GolemBehavior : MonoBehaviour
 
     void Die()
     {
-        player.gameObject.GetComponent<PlayerController>().StartSlotAnimation(Random.Range(1, 22)*100);
+        player.gameObject.GetComponent<PlayerController>().StartSlotAnimation(Random.Range(1, 22)*1000);
         Destroy(WeakImage);
         Destroy(this.gameObject);
     }
